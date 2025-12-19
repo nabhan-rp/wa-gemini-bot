@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 
 const app = express();
@@ -17,10 +18,8 @@ const GRAPH_API_VERSION = process.env.GRAPH_API_VERSION || "v20.0";
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
-// --- health check ---
+// --- health checks ---
 app.get("/", (_req, res) => res.status(200).send("OK"));
-
-// --- health check (JSON) ---
 app.get("/health", (_req, res) => res.status(200).json({ ok: true }));
 
 // --- 1) Webhook verification (GET) ---
@@ -61,8 +60,12 @@ async function askGemini(text) {
 
   const data = await r.json();
   const reply =
-    data?.candidates?.[0]?.content?.parts?.map(p => p.text).filter(Boolean).join("")?.trim()
-    || "Maaf, aku belum bisa menjawab itu.";
+    data?.candidates?.[0]?.content?.parts
+      ?.map(p => p.text)
+      .filter(Boolean)
+      .join("")
+      ?.trim() || "Maaf, aku belum bisa menjawab itu.";
+
   return reply;
 }
 
@@ -111,7 +114,6 @@ function isDuplicate(id) {
 // --- 2) Webhook receiver (POST) ---
 app.post("/webhook", async (req, res) => {
   try {
-    // format umum WA Cloud API
     const entry = req.body?.entry?.[0];
     const change = entry?.changes?.[0];
     const value = change?.value;
